@@ -8,3 +8,6 @@ __pycache__/
 fastapi_server/__pycache__
 gounion2/
 Frontend/
+.env
+media/
+node_modules/
