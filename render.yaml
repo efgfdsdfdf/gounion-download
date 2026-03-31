@@ -11,13 +11,9 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        sync: false
       - key: SUPABASE_URL
-        sync: false
       - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: ALLOWED_ORIGINS
-        sync: false
 
   - type: static
     name: gounion-frontend
