@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --font-plus-jakarta: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  /* North Star Theme Colors */
+  --color-zinc-950: #0a0a0c;
+  --color-primary: #c4ff0e; /* Electric Lime */
+  --color-accent: #7c3aed;  /* Purple */
+}
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0c] text-zinc-100 antialiased;
+    font-family: var(--font-plus-jakarta);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-[#141417]/80 backdrop-blur-xl border border-white/5;
+  }
+  
+  .story-ring {
+    background: linear-gradient(45deg, #c4ff0e, #7c3aed);
+    padding: 2px;
+  }
+  
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#c4ff0e] to-[#7c3aed];
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0c;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
