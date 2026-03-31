@@ -19,9 +19,8 @@ services:
       - key: ALLOWED_ORIGINS
         sync: false
 
-  - type: web
+  - type: static
     name: gounion-frontend
-    runtime: static
     plan: free
     rootDir: gounion-remake
     buildCommand: npm install && npm run build
