@@ -11,11 +11,11 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        value: placeholder_replace_me
+        value: SET_IN_RENDER_DASHBOARD
       - key: SUPABASE_URL
         value: https://mswnviziobmmpsrwckjd.supabase.co
       - key: SUPABASE_SERVICE_KEY
-        value: placeholder_replace_me
+        value: SET_IN_RENDER_DASHBOARD
       - key: ALLOWED_ORIGINS
         value: "https://gounion-frontend.onrender.com"
 
