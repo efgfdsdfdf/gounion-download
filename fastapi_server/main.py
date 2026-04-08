@@ -525,43 +525,33 @@ def mark_notifications_read(
 async def upload_file(
     file: UploadFile = File(...), current_user: models.User = Depends(get_current_user)
 ):
-    # Generate unique filename with user folder
-    file_extension = file.filename.split(".")[-1]
+    import traceback
+    file_extension = (file.filename or "bin").split(".")[-1].lower()
     unique_filename = f"{current_user.id}/{uuid.uuid4()}.{file_extension}"
+    file_content = await file.read()
 
     try:
-        # Read file content
-        file_content = await file.read()
+        bucket_name = "post_images"
+        print(f"[upload] {unique_filename} | {file.content_type} | {len(file_content)} bytes")
 
-        # Upload to Supabase Storage
-        bucket_name = "post_images"  #
         response = await asyncio.to_thread(
             supabase.storage.from_(bucket_name).upload,
             path=unique_filename,
             file=file_content,
-            file_options={"content-type": file.content_type},
+            file_options={"content-type": file.content_type or "application/octet-stream", "upsert": "true"},
         )
+        print(f"[upload] Supabase response: {response}")
 
-        # Get Public URL
-        public_url = supabase.storage.from_(bucket_name).get_public_url(unique_filename)
-
-        # Remove trailing ? if present (Supabase bug)
-        public_url = public_url.rstrip("?")
-
+        public_url = supabase.storage.from_(bucket_name).get_public_url(unique_filename).rstrip("?")
+        print(f"[upload] Public URL: {public_url}")
         return {"filename": unique_filename, "url": public_url}
 
     except Exception as e:
-        # Fallback to local storage if Supabase fails
-        print(f"Supabase upload failed: {e}. Falling back to local storage.")
-        os.makedirs(f"media/{current_user.id}", exist_ok=True)
-        file_path = f"media/{unique_filename}"
-
-        # Write the file_content we already read
-        with open(file_path, "wb") as buffer:
-            buffer.write(file_content)
-
-        print(f"File saved locally to: {file_path}")
-        return {"filename": unique_filename, "url": f"/media/{unique_filename}"}
+        print(f"[upload] FAILED: {e}\n{traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {str(e)} — ensure bucket 'post_images' exists in Supabase Storage and SUPABASE_SERVICE_KEY is set in Render."
+        )
 
 
 @app.get("/university/{university_name}/users", response_model=List[schemas.User])
