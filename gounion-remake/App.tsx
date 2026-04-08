@@ -58,7 +58,8 @@ const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
-  if (!isAuthenticated && location.pathname !== "/login") {
+  const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
+  if (!isAuthenticated && !PUBLIC_ROUTES.includes(location.pathname)) {
     return <Navigate to="/login" replace />;
   }
 
