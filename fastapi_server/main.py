@@ -59,7 +59,10 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 # to existing tables. We handle additive migrations here with IF NOT EXISTS.
 @app.on_event("startup")
 async def run_migrations():
-    from .database import engine as _engine
+    from .database import engine as _engine, SQLALCHEMY_DATABASE_URL
+    # ALTER TABLE ... IF NOT EXISTS is Postgres-only syntax
+    if not SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+        return
     with _engine.connect() as conn:
         try:
             conn.execute(text(
