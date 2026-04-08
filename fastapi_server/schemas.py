@@ -84,6 +84,7 @@ class Comment(CommentBase):
 class PostBase(BaseModel):
     caption: Optional[str] = None
     image: Optional[str] = None
+    video: Optional[str] = None
 
 
 class PostCreate(PostBase):
@@ -99,6 +100,7 @@ class Post(PostBase):
     user_id: str
     group_id: Optional[int] = None
     image: Optional[str] = None
+    video: Optional[str] = None
     created_at: datetime
     user: User
     comments: List[Comment] = []

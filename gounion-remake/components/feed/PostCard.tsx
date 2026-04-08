@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CommentSection } from "./CommentSection";
 import { useAuthStore } from "../../store";
+import { MediaPlayer } from "../ui/MediaPlayer";
 
 interface PostCardProps {
   post: Post;
@@ -150,13 +151,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         {/* Media */}
         {post.imageUrl && (
-          <div className="mb-6 rounded-[24px] overflow-hidden border border-white/5 bg-zinc-900/50 relative group/media">
-            <img
-              src={post.imageUrl}
-              className="w-full object-cover max-h-[500px] transition-transform duration-700 group-hover/media:scale-105"
-              alt="Post media"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          <div className="mb-6">
+            <MediaPlayer url={post.imageUrl} alt="Post media" />
           </div>
         )}
 

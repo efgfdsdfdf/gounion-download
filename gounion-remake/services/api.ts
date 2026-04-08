@@ -42,18 +42,19 @@ export const transformUser = (user: any) => {
   };
 };
 
-// Helper to transform post data
-// Helper to transform post data
 const transformPost = (post: any) => {
   const userStr = sessionStorage.getItem('user_data');
   const user = userStr ? JSON.parse(userStr) : null;
   const currentUserId = user ? user.id : null;
 
+  // Support both 'image' and 'video' fields from the backend
+  const rawMedia = post.video || post.image;
+
   return {
     id: post.id.toString(),
     author: transformUser(post.user),
     content: post.caption || '',
-    imageUrl: getFullUrl(post.image),
+    imageUrl: getFullUrl(rawMedia),   // kept as imageUrl for compatibility; MediaPlayer auto-detects type
     likes: post.likes_count || 0,
     comments: post.comments?.length || 0,
     timestamp: new Date(post.created_at).toLocaleDateString(),
@@ -109,17 +110,19 @@ export const api = {
       return res.data.map(transformPost);
     },
     create: async (data: any) => {
-      let imageUrl = null;
+      let mediaUrl = null;
       if (data.image) {
         const formData = new FormData();
         formData.append('file', data.image);
         const uploadRes = await apiClient.post('/upload/', formData);
-        imageUrl = uploadRes.data.url;
+        mediaUrl = uploadRes.data.url;
       }
-      
+
+      const isVideo = data.image?.type?.startsWith('video/');
       const res = await apiClient.post('/posts/', {
         caption: data.caption,
-        image: imageUrl
+        image: isVideo ? null : mediaUrl,
+        video: isVideo ? mediaUrl : null,
       });
       return transformPost(res.data);
     },
