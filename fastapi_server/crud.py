@@ -845,11 +845,13 @@ def get_platform_stats(db: Session):
     total_groups = db.query(models.Group).count()
     total_reports = db.query(models.Report).filter(models.Report.status == "pending").count()
     
+    from sqlalchemy import func
+
     # Get top universities
     top_unis = (
-        db.query(models.Profile.university, models.Table.func.count(models.Profile.id))
+        db.query(models.Profile.university, func.count(models.Profile.id))
         .group_by(models.Profile.university)
-        .order_by(models.Table.func.count(models.Profile.id).desc())
+        .order_by(func.count(models.Profile.id).desc())
         .limit(5)
         .all()
     )

@@ -26,6 +26,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
   const [showMenu, setShowMenu] = React.useState(false);
+  const [isReporting, setIsReporting] = React.useState(false);
+  const [reportReason, setReportReason] = React.useState("");
 
   const likeMutation = useMutation({
     mutationFn: () => api.posts.like(post.id),
@@ -138,8 +140,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     {!isOwner && (
                       <button
                         onClick={() => {
-                          const res = prompt("Why are you reporting?");
-                          if (res) reportMutation.mutate(res);
+                          setIsReporting(true);
+                          setShowMenu(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
                       >
@@ -221,7 +223,47 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </div>env
+
+      <AnimatePresence>
+        {isReporting && (
+          <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-panel p-6 rounded-2xl w-full max-w-sm"
+            >
+              <h3 className="text-xl font-serif text-white mb-4">Report Post</h3>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Why are you reporting this post?"
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white/20 mb-4 min-h-[100px] resize-none"
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setIsReporting(false)}
+                  className="px-4 py-2 text-white/60 hover:text-white transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    reportMutation.mutate(reportReason);
+                    setIsReporting(false);
+                    setReportReason("");
+                  }}
+                  disabled={!reportReason.trim() || reportMutation.isPending}
+                  className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium rounded-xl disabled:opacity-50"
+                >
+                  {reportMutation.isPending ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.article>
   );
 };

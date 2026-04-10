@@ -26,3 +26,4 @@ dist-ssr
 venv/
 .env
 ./*.zip
+make_admin.py

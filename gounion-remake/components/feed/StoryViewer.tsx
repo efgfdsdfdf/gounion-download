@@ -54,21 +54,24 @@ export const StoryViewer: React.FC<StoryViewerProps> = ({
 
     const timer = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          if (currentIndex < stories.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
-            return 0;
-          } else {
-            onClose();
-            return 100;
-          }
-        }
+        if (prev >= 100) return 100;
         return prev + 1;
       });
     }, 50);
 
     return () => clearInterval(timer);
-  }, [isOpen, currentIndex, stories.length, onClose]);
+  }, [isOpen, currentIndex]);
+
+  useEffect(() => {
+    if (progress >= 100 && isOpen) {
+      if (currentIndex < stories.length - 1) {
+        setCurrentIndex((prev) => prev + 1);
+        setProgress(0);
+      } else {
+        onClose();
+      }
+    }
+  }, [progress, currentIndex, stories.length, isOpen, onClose]);
 
   const currentStory = stories[currentIndex] || {
     content: "No content",
