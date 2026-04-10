@@ -778,15 +778,19 @@ async def upload_file(
         bucket_name = "post_images"
         print(f"[upload] {unique_filename} | {file.content_type} | {len(file_content)} bytes")
 
+        # Use an isolated admin client because the global 'supabase' client picks up user sessions 
+        # during auth endpoints, leading to RLS failures here.
+        admin_supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
         response = await asyncio.to_thread(
-            supabase.storage.from_(bucket_name).upload,
+            admin_supabase.storage.from_(bucket_name).upload,
             path=unique_filename,
             file=file_content,
             file_options={"content-type": file.content_type or "application/octet-stream", "upsert": "true"},
         )
         print(f"[upload] Supabase response: {response}")
 
-        public_url = supabase.storage.from_(bucket_name).get_public_url(unique_filename).rstrip("?")
+        public_url = admin_supabase.storage.from_(bucket_name).get_public_url(unique_filename).rstrip("?")
         print(f"[upload] Public URL: {public_url}")
         return {"filename": unique_filename, "url": public_url}
 
