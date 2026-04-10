@@ -3,8 +3,9 @@ import {
   Heart,
   MessageCircle,
   Share2,
-  MoreHorizontal,
   Bookmark,
+  Flag,
+  Trash2,
 } from "lucide-react";
 import { Post } from "../../types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,6 +101,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     },
   });
 
+  const [showMenu, setShowMenu] = React.useState(false);
+
+  const reportMutation = useMutation({
+    mutationFn: (reason: string) =>
+      api.reports.create({ reason, postId: parseInt(post.id) }),
+    onSuccess: () => {
+      alert("Post reported successfully. Thank you for keeping GoUnion safe!");
+      setShowMenu(false);
+    },
+    onError: () => {
+      alert("Failed to report post. Please try again later.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => api.posts.delete(post.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      alert("Post deleted.");
+    },
+  });
+
+  const handleReport = () => {
+    const reason = prompt("Why are you reporting this post?");
+    if (reason) {
+      reportMutation.mutate(reason);
+    }
+  };
+
+  const isModerator =
+    currentUser?.role === "admin" || currentUser?.role === "moderator";
+  const isOwner = currentUser?.id === post.author.id;
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 20 }}
@@ -139,9 +173,52 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               </p>
             </div>
           </Link>
-          <button className="p-2 text-zinc-600 hover:text-white transition-colors">
-            <MoreHorizontal size={20} />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className={`p-2 transition-colors rounded-xl ${showMenu ? "bg-white/10 text-white" : "text-zinc-600 hover:text-white"}`}
+            >
+              <MoreHorizontal size={20} />
+            </button>
+
+            <AnimatePresence>
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[100]"
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className="absolute right-0 mt-2 w-48 bg-[#1a1a1e] border border-white/10 rounded-2xl shadow-xl z-[110] overflow-hidden"
+                  >
+                    {!isOwner && (
+                      <button
+                        onClick={handleReport}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
+                      >
+                        <Flag size={16} />
+                        Report Content
+                      </button>
+                    )}
+                    {(isOwner || isModerator) && (
+                      <button
+                        onClick={() => {
+                          if (confirm("Delete this post?")) deleteMutation.mutate();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                      >
+                        <Trash2 size={16} />
+                        Delete Post
+                      </button>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Content */}

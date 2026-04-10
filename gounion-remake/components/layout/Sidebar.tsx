@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "../../store";
 
@@ -23,78 +24,108 @@ export const Sidebar = ({ className }: { className?: string }) => {
 
   return (
     <div
-      className={`${className} flex flex-col h-full border-r border-white/5 bg-[#0a0a0c]/50 backdrop-blur-xl pt-8 pb-8 px-5 sticky top-0`}
+      className={`${className} flex flex-col h-screen border-r border-white/5 bg-black/40 backdrop-blur-3xl pt-8 pb-8 px-5 sticky top-0`}
     >
       <div className="flex items-center gap-3 mb-10 px-2 group cursor-pointer">
-        <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.05)] transition-transform group-hover:scale-110 border border-white/10">
-          <img
-            src="/logo.png"
-            alt="University Logo"
-            className="w-8 h-8 object-contain"
-          />
+        <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center font-serif font-black text-2xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-transform group-hover:scale-105">
+          G
         </div>
-        <span className="text-2xl font-black tracking-tighter text-white">
+        <span className="font-serif text-3xl font-bold tracking-tight text-white">
           GoUnion
         </span>
       </div>
 
-      <nav className="flex-1 space-y-3">
+      <nav className="flex-1 space-y-2">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative
+              flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group
               ${
                 isActive
-                  ? "bg-white/5 text-primary"
-                  : "text-zinc-500 hover:text-zinc-100 hover:bg-white/5"
+                  ? "bg-gradient-to-r from-white/10 to-white/5 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                  : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
               }
             `}
           >
-            <item.icon
-              size={22}
-              className={`transition-transform duration-300 ${item.path === "/" ? "" : "group-hover:scale-110"}`}
-            />
-            <span className="font-bold text-sm">{item.label}</span>
-            {/* Active Indicator */}
-            {({ isActive }) =>
-              isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full shadow-[0_0_10px_rgba(196,255,14,0.5)]" />
-              )
-            }
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  size={20}
+                  className={`transition-transform duration-300 ${!isActive ? "group-hover:scale-110 text-white/60 group-hover:text-white" : "text-white"}`}
+                />
+                <span className="font-medium text-sm">{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
 
         <NavLink
           to={`/profile/${user?.username}`}
           className={({ isActive }) => `
-              flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative mt-4
+              flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group mt-4
               ${
                 isActive
-                  ? "bg-white/5 text-primary"
-                  : "text-zinc-500 hover:text-white hover:bg-white/10"
+                  ? "bg-gradient-to-r from-white/10 to-white/5 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                  : "text-white/60 hover:text-white hover:bg-white/5 border border-transparent"
               }
             `}
         >
-          <User size={22} />
-          <span className="font-bold text-sm">Profile</span>
+          {({ isActive }) => (
+            <>
+              <User size={20} className={isActive ? "text-white" : "text-white/60 group-hover:text-white"} />
+              <span className="font-medium text-sm">Profile</span>
+            </>
+          )}
         </NavLink>
+
+        {(user?.role === "admin" || user?.role === "moderator") && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `
+              flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group mt-2
+              ${
+                isActive
+                  ? "bg-gradient-to-r from-white/10 to-white/5 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                  : "text-emerald-400/80 hover:text-emerald-400 hover:bg-emerald-400/10 border border-transparent"
+              }
+            `}
+          >
+            {({ isActive }) => (
+              <>
+                <ShieldCheck size={20} className={isActive ? "text-white" : "text-emerald-400/80 group-hover:text-emerald-400"} />
+                <span className="font-medium text-sm">Admin Panel</span>
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
 
-      <div className="space-y-6 pt-6 border-t border-white/5">
-        <button className="w-full h-14 bg-primary text-black rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-[0_0_20px_rgba(196,255,14,0.2)]">
-          <Plus size={20} />
-          <span>New Post</span>
-        </button>
-
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
-        >
-          <LogOut size={20} />
-          <span className="font-bold text-sm">Sign Out</span>
-        </button>
+      <div className="p-4 mt-auto">
+        <div className="glass rounded-2xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <img 
+              src={user?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`}
+              alt="Profile" 
+              className="w-10 h-10 rounded-full border border-white/10 object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">{user?.fullName}</p>
+              <p className="text-xs text-white/50 truncate">@{user?.username}</p>
+            </div>
+          </div>
+          <div className="h-px w-full bg-white/10" />
+          <div className="flex items-center justify-between">
+            <button className="text-white/50 hover:text-white transition-colors p-1 flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+              <Plus size={16} /> Post
+            </button>
+            <button onClick={logout} className="text-white/50 hover:text-red-400 transition-colors p-1">
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

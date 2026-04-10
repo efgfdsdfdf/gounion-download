@@ -136,6 +136,94 @@ async def get_current_user_optional(
         return None
 
 
+# Reports
+@app.post("/reports/", response_model=schemas.Report)
+def create_report(
+    report: schemas.ReportCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    return crud.create_report(db, report, user_id=current_user.id)
+
+
+@app.get("/reports/", response_model=List[schemas.Report])
+def get_reports(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_moderator),
+):
+    return crud.get_reports(db)
+
+
+@app.post("/reports/{report_id}/resolve")
+def resolve_report(
+    report_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_moderator),
+):
+    return crud.resolve_report(db, report_id, status)
+
+
+# Admin Endpoints
+@app.get("/admin/stats")
+def get_admin_stats(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    return crud.get_platform_stats(db)
+
+
+@app.get("/admin/users", response_model=List[schemas.User])
+def get_admin_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    return crud.get_all_users(db, skip=skip, limit=limit)
+
+
+@app.put("/admin/users/{user_id}/role")
+def update_user_role(
+    user_id: str,
+    role: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    return crud.update_user_role(db, user_id, role)
+
+
+@app.post("/admin/users/{user_id}/toggle-active")
+def toggle_user_active(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_admin),
+):
+    return crud.toggle_user_active(db, user_id)
+
+
+async def get_current_moderator(
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.role not in ["moderator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Moderator access required",
+        )
+    return current_user
+
+
+async def get_current_admin(
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Administrator access required",
+        )
+    return current_user
+
+
 @app.post("/token", response_model=schemas.Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
@@ -561,6 +649,17 @@ def mark_notifications_read(
 ):
     crud.mark_notifications_read(db, user_id=current_user.id)
     return {"status": "marked read"}
+
+
+@app.get("/notifications/unread-count")
+def get_unread_count(
+    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
+):
+    count = db.query(models.Notification).filter(
+        models.Notification.user_id == current_user.id,
+        models.Notification.is_read == False
+    ).count()
+    return {"count": count}
 
 
 @app.post("/upload/")

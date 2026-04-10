@@ -9,6 +9,8 @@ export interface User {
   bio?: string;
   coverUrl?: string;
   isFollowing?: boolean;
+  role: 'user' | 'moderator' | 'admin';
+  isActive?: boolean;
 }
 
 export interface Post {
@@ -49,9 +51,21 @@ export interface Chat {
 
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow';
+  type: string;
   actor: User;
   message: string;
   timestamp: string;
   read: boolean;
+}
+
+export interface Report {
+  id: string;
+  reason: string;
+  userId: string;
+  postId?: string;
+  commentId?: string;
+  status: 'pending' | 'resolved' | 'dismissed';
+  createdAt: string;
+  user: User;
+  post?: Post;
 }

@@ -20,6 +20,7 @@ import { Messages } from "./pages/Messages";
 import { Profile } from "./pages/Profile";
 import { Alumni } from "./pages/Alumni";
 import { GroupDetails } from "./pages/GroupDetails";
+import { AdminPanel } from "./pages/AdminPanel";
 import { useAuthStore } from "./store";
 
 const queryClient = new QueryClient({
@@ -116,6 +117,14 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <PrivateRoute>
+            <AdminPanel />
           </PrivateRoute>
         }
       />

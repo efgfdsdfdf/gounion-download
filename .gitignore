@@ -11,3 +11,5 @@ Frontend/
 .env
 media/
 node_modules/
+
+v2_temp/

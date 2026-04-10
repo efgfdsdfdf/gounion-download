@@ -39,6 +39,8 @@ export const transformUser = (user: any) => {
     bio: user.profile?.bio || '',
     coverUrl: getFullUrl(user.profile?.cover_photo) || '',
     isFollowing: false,
+    role: user.role || 'user',
+    isActive: user.is_active ?? true,
   };
 };
 
@@ -346,6 +348,45 @@ export const api = {
         timestamp: new Date(n.created_at).toLocaleDateString(),
         read: n.is_read
       }));
+    },
+    getUnreadCount: async () => {
+      const res = await apiClient.get('/notifications/unread-count');
+      return res.data.count;
+    },
+    markAsRead: async () => {
+      await apiClient.post('/notifications/read');
+    }
+  },
+  reports: {
+    create: async (data: { reason: string; postId?: number; commentId?: number }) => {
+      const res = await apiClient.post('/reports/', data);
+      return res.data;
+    },
+    getAll: async () => {
+      const res = await apiClient.get('/reports/');
+      return res.data;
+    },
+    resolve: async (id: number, status: string) => {
+      const res = await apiClient.post(`/reports/${id}/resolve?status=${status}`);
+      return res.data;
+    }
+  },
+  admin: {
+    getStats: async () => {
+      const res = await apiClient.get('/admin/stats');
+      return res.data;
+    },
+    getUsers: async () => {
+      const res = await apiClient.get('/admin/users');
+      return res.data.map(transformUser);
+    },
+    updateRole: async (userId: string, role: string) => {
+      const res = await apiClient.put(`/admin/users/${userId}/role?role=${role}`);
+      return res.data;
+    },
+    toggleActive: async (userId: string) => {
+      const res = await apiClient.post(`/admin/users/${userId}/toggle-active`);
+      return res.data;
     }
   },
   stories: {

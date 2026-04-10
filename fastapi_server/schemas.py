@@ -56,6 +56,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: str
     is_active: bool
+    role: str
     profile: Optional[Profile] = None
 
     class Config:
@@ -145,6 +146,29 @@ class Notification(NotificationBase):
     is_read: bool
     created_at: datetime
     sender: User
+
+    class Config:
+        from_attributes = True
+
+
+class ReportBase(BaseModel):
+    reason: str
+    post_id: Optional[int] = None
+    comment_id: Optional[int] = None
+
+
+class ReportCreate(ReportBase):
+    pass
+
+
+class Report(ReportBase):
+    id: int
+    user_id: str
+    status: str
+    created_at: datetime
+    user: User
+    post: Optional[Post] = None
+    comment: Optional[Comment] = None
 
     class Config:
         from_attributes = True

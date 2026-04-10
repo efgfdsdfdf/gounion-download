@@ -46,6 +46,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     # hashed_password removed - handled by Supabase Auth
     is_active = Column(Boolean, default=True)
+    role = Column(String, default="user")  # 'user', 'moderator', 'admin'
+
 
     profile = relationship("Profile", back_populates="user", uselist=False)
     posts = relationship("Post", back_populates="user")
@@ -158,6 +160,23 @@ class Notification(Base):
 
     user = relationship("User", foreign_keys=[user_id], back_populates="notifications")
     sender = relationship("User", foreign_keys=[sender_id])
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"))  # Reporter
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
+    reason = Column(String)
+    status = Column(String, default="pending")  # pending, resolved, dismissed
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+    post = relationship("Post")
+    comment = relationship("Comment")
+
 
 
 class Group(Base):

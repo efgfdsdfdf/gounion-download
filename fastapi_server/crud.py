@@ -782,3 +782,88 @@ def like_story(db: Session, story_id: int, user_id: str):
     db.commit()
     db.refresh(db_like)
     return db_like
+
+
+# Administrative & Moderation
+def create_report(db: Session, report: schemas.ReportCreate, user_id: str):
+    db_report = models.Report(**report.model_dump(), user_id=user_id)
+    db.add(db_report)
+    db.commit()
+    db.refresh(db_report)
+    return db_report
+
+
+def get_reports(db: Session, skip: int = 0, limit: int = 50):
+    return (
+        db.query(models.Report)
+        .options(
+            joinedload(models.Report.user),
+            joinedload(models.Report.post),
+            joinedload(models.Report.comment),
+        )
+        .order_by(models.Report.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def resolve_report(db: Session, report_id: int, status: str):
+    db_report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    if db_report:
+        db_report.status = status
+        db.commit()
+        db.refresh(db_report)
+    return db_report
+
+
+def get_all_users(db: Session, skip: int = 0, limit: int = 100):
+    return (
+        db.query(models.User)
+        .options(selectinload(models.User.profile))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def update_user_role(db: Session, user_id: str, role: str):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user:
+        db_user.role = role
+        db.commit()
+        db.refresh(db_user)
+    return db_user
+
+
+def toggle_user_active(db: Session, user_id: str):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user:
+        db_user.is_active = not db_user.is_active
+        db.commit()
+        db.refresh(db_user)
+    return db_user
+
+
+def get_platform_stats(db: Session):
+    total_users = db.query(models.User).count()
+    total_posts = db.query(models.Post).count()
+    total_groups = db.query(models.Group).count()
+    total_reports = db.query(models.Report).filter(models.Report.status == "pending").count()
+    
+    # Get top universities
+    top_unis = (
+        db.query(models.Profile.university, models.Table.func.count(models.Profile.id))
+        .group_by(models.Profile.university)
+        .order_by(models.Table.func.count(models.Profile.id).desc())
+        .limit(5)
+        .all()
+    )
+    
+    return {
+        "total_users": total_users,
+        "total_posts": total_posts,
+        "total_groups": total_groups,
+        "pending_reports": total_reports,
+        "top_universities": [{"name": u[0], "count": u[1]} for u in top_unis if u[0]]
+    }

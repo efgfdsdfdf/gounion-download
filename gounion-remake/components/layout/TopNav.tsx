@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../services/api";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const TopNav = () => {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ export const TopNav = () => {
     queryFn: api.notifications.getAll,
     refetchInterval: 30000,
   });
+
+  const queryClient = useQueryClient();
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
@@ -76,8 +79,9 @@ export const TopNav = () => {
                 <NotificationDropdown
                   notifications={notifications || []}
                   onClose={() => setShowNotifications(false)}
-                  onMarkRead={() => {
-                    // api.notifications.markAllRead();
+                  onMarkRead={async () => {
+                    await api.notifications.markAsRead();
+                    queryClient.invalidateQueries({ queryKey: ["notifications"] });
                     setShowNotifications(false);
                   }}
                   onItemClick={(n) => {
