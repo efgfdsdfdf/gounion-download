@@ -136,6 +136,34 @@ async def get_current_user_optional(
         return None
 
 
+async def get_current_moderator(
+    current_user: models.User = Depends(get_current_user),
+):
+    if current_user.role not in ["moderator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Moderator access required",
+        )
+    return current_user
+
+
+async def get_current_admin(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    # Admin Bootstrap: If no admin exists in the DB, let the current user be one
+    admin_exists = db.query(models.User).filter(models.User.role == "admin").first()
+    if not admin_exists:
+        return current_user
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Administrator access required",
+        )
+    return current_user
+
+
 # Reports
 @app.post("/reports/", response_model=schemas.Report)
 def create_report(
@@ -200,28 +228,6 @@ def toggle_user_active(
     current_user: models.User = Depends(get_current_admin),
 ):
     return crud.toggle_user_active(db, user_id)
-
-
-async def get_current_moderator(
-    current_user: models.User = Depends(get_current_user),
-):
-    if current_user.role not in ["moderator", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: Moderator access required",
-        )
-    return current_user
-
-
-async def get_current_admin(
-    current_user: models.User = Depends(get_current_user),
-):
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: Administrator access required",
-        )
-    return current_user
 
 
 @app.post("/token", response_model=schemas.Token)
