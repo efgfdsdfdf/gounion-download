@@ -35,7 +35,12 @@ _raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
     "https://gounion-frontend.onrender.com,http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000"
 )
-ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+# Parse origins and ensure no trailing slashes, as origins must be exact
+ALLOWED_ORIGINS = []
+for o in _raw_origins.split(","):
+    clean_o = o.strip().rstrip("/")
+    if clean_o:
+        ALLOWED_ORIGINS.append(clean_o)
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,20 +63,28 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 # SQLAlchemy create_all only creates missing tables; it won't add new columns
 # to existing tables. We handle additive migrations here with IF NOT EXISTS.
 @app.on_event("startup")
-async def run_migrations():
+async def startup_event():
+    # 1. Database Migrations
     from .database import engine as _engine, SQLALCHEMY_DATABASE_URL
-    # ALTER TABLE ... IF NOT EXISTS is Postgres-only syntax
-    if not SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
-        return
-    with _engine.connect() as conn:
-        try:
-            conn.execute(text(
-                "ALTER TABLE posts ADD COLUMN IF NOT EXISTS video VARCHAR;"
-            ))
-            conn.commit()
-            print("[migration] 'video' column ensured on posts table.")
-        except Exception as e:
-            print(f"[migration] Note: {e}")
+    if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+        with _engine.connect() as conn:
+            try:
+                conn.execute(text(
+                    "ALTER TABLE posts ADD COLUMN IF NOT EXISTS video VARCHAR;"
+                ))
+                conn.commit()
+                print("[migration] 'video' column ensured on posts table.")
+            except Exception as e:
+                print(f"[migration] Note: {e}")
+    
+    # 2. Supabase Connection Check
+    try:
+        # Simple check to see if we can reach Supabase
+        await asyncio.to_thread(supabase.table("users").select("count", count="exact").limit(1).execute)
+        print("[startup] Supabase connection verified.")
+    except Exception as e:
+        print(f"[CRITICAL] Supabase connection failed: {e}")
+        # We don't exit, but this will be visible in Render logs
 
 
 # Dependency
@@ -235,6 +248,13 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
     try:
+        # Check if email is valid format
+        if "@" not in form_data.username:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username must be an email address"
+            )
+
         response = await asyncio.to_thread(
             supabase.auth.sign_in_with_password,
             {
@@ -242,12 +262,27 @@ async def login_for_access_token(
                 "password": form_data.password,
             },
         )
+        
+        if not response.session:
+             raise Exception("No session returned from Supabase")
+
         return {"access_token": response.session.access_token, "token_type": "bearer"}
     except Exception as e:
-        print(f"LOGIN FAILED: {str(e)}")
+        error_msg = str(e)
+        print(f"LOGIN FAILED for {form_data.username}: {error_msg}")
+        
+        # Distinguish between network errors and auth errors
+        if "Invalid login credentials" in error_msg:
+            detail = "Incorrect email or password"
+        elif "Email not confirmed" in error_msg:
+            detail = "Please confirm your email before logging in"
+        else:
+            # Mask technical errors for security, but ensure they are logged on server
+            detail = "Authentication service unavailable"
+            
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail=detail,
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -1005,7 +1040,24 @@ def like_story(
 
 @app.get("/")
 async def read_root():
-    return {"message": "GoUnion API is running. Visit /docs for documentation."}
+    return {
+        "message": "GoUnion API is running.",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 
-# app.mount("/", StaticFiles(directory="Frontend/GoUnion", html=True), name="frontend")
+@app.get("/health")
+async def health_check():
+    """Diagnostic endpoint to verify backend status and configuration."""
+    return {
+        "status": "online",
+        "timestamp": datetime.now().isoformat(),
+        "cors": {
+            "allowed_origins": ALLOWED_ORIGINS,
+        },
+        "environment": {
+            "has_supabase_url": bool(os.getenv("SUPABASE_URL")),
+            "has_supabase_key": bool(os.getenv("SUPABASE_SERVICE_KEY")),
+        }
+    }
