@@ -19,6 +19,14 @@ const installSteps = [
 ];
 
 export const DownloadPage = () => {
+  const markApkDownloaded = () => {
+    try {
+      localStorage.setItem("gounion_apk_downloaded", "true");
+    } catch {
+      // Ignore storage errors in restricted contexts.
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#030303] text-white relative overflow-hidden selection:bg-primary/30">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -59,6 +67,7 @@ export const DownloadPage = () => {
             <a
               href={APK_DOWNLOAD_URL}
               download={APK_FILE_NAME}
+              onClick={markApkDownloaded}
               className="inline-flex items-center justify-center gap-3 h-12 px-6 rounded-xl bg-white text-black font-bold text-xs uppercase tracking-[0.16em] hover:bg-zinc-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.14)]"
             >
               <Download size={16} />
@@ -146,11 +155,19 @@ export const DownloadPage = () => {
             <a
               href={APK_DOWNLOAD_URL}
               download={APK_FILE_NAME}
+              onClick={markApkDownloaded}
               className="mt-5 inline-flex w-full items-center justify-center gap-3 h-12 rounded-xl bg-primary text-black font-black text-xs uppercase tracking-[0.16em] hover:brightness-95 transition-all"
             >
               <Download size={16} />
               Download Again
             </a>
+            <Link
+              to="/login"
+              onClick={markApkDownloaded}
+              className="mt-3 inline-flex w-full items-center justify-center h-11 rounded-xl border border-white/20 text-white font-bold text-xs uppercase tracking-[0.16em] hover:bg-white/5 transition-all"
+            >
+              Continue To Login
+            </Link>
           </section>
         </motion.div>
       </div>

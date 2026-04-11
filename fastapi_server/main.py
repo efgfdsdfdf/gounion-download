@@ -87,6 +87,8 @@ REQUIRED_MOBILE_ORIGINS = [
     "https://localhost",
     "capacitor://localhost",
     "ionic://localhost",
+    "http://10.0.2.2",
+    "https://10.0.2.2",
 ]
 for origin in REQUIRED_MOBILE_ORIGINS:
     if origin not in ALLOWED_ORIGINS:
@@ -95,6 +97,7 @@ for origin in REQUIRED_MOBILE_ORIGINS:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"^(https?|capacitor|ionic)://localhost(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

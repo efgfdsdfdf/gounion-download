@@ -3,13 +3,14 @@ import axios from 'axios';
 import { useAuthStore } from '../store';
 
 const DEFAULT_PROD_API_URL = 'https://gounion-backend.onrender.com';
-const API_URL =
+export const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? 'http://127.0.0.1:8001' : DEFAULT_PROD_API_URL);
 
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -84,6 +85,12 @@ const transformPost = (post: any) => {
 };
 
 export const api = {
+  health: {
+    check: async () => {
+      const res = await apiClient.get('/health');
+      return res.data;
+    },
+  },
   auth: {
     login: async (credentials: any) => {
       const formData = new FormData();
