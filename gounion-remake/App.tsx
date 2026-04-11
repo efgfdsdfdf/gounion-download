@@ -61,10 +61,12 @@ const AppBootState = ({
   isChecking,
   error,
   onRetry,
+  onContinue,
 }: {
   isChecking: boolean;
   error: string | null;
   onRetry: () => void;
+  onContinue: () => void;
 }) => {
   return (
     <div className="min-h-screen w-full bg-[#030303] text-white flex items-center justify-center px-6">
@@ -86,12 +88,20 @@ const AppBootState = ({
           <span className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce" />
         </div>
         {!isChecking && (
-          <button
-            onClick={onRetry}
-            className="mt-8 h-11 px-6 rounded-xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all"
-          >
-            Retry Connection
-          </button>
+          <div className="mt-8 space-y-3">
+            <button
+              onClick={onRetry}
+              className="w-full h-11 px-6 rounded-xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all"
+            >
+              Retry Connection
+            </button>
+            <button
+              onClick={onContinue}
+              className="w-full h-11 px-6 rounded-xl border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all"
+            >
+              Continue To Login
+            </button>
+          </div>
         )}
         <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
           API {API_URL}
@@ -106,6 +116,7 @@ const AppRoutes = () => {
   const location = useLocation();
   const [checkingBackend, setCheckingBackend] = useState(true);
   const [backendError, setBackendError] = useState<string | null>(null);
+  const [skipBackendGate, setSkipBackendGate] = useState(false);
 
   const isNativeApp = Capacitor.isNativePlatform();
   const hasDownloadedApk = useMemo(() => {
@@ -144,12 +155,13 @@ const AppRoutes = () => {
     "/download",
   ];
 
-  if (checkingBackend || backendError) {
+  if (!skipBackendGate && (checkingBackend || backendError)) {
     return (
       <AppBootState
         isChecking={checkingBackend}
         error={backendError}
         onRetry={checkBackendHealth}
+        onContinue={() => setSkipBackendGate(true)}
       />
     );
   }
