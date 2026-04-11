@@ -64,13 +64,19 @@ export const Messages = () => {
 
       return { previousMessages, previousChats };
     },
+    onSuccess: (newServerMsg) => {
+      // Upon successful network commit, replace the temporary tracking message with 
+      // the permanent authoritative message from the backend.
+      queryClient.setQueryData(["messages", selectedChatId], (old: any) => {
+        const sansTemp = old?.filter((m: any) => !m.id.toString().startsWith('temp-')) || [];
+        return [...sansTemp, newServerMsg];
+      });
+      // Gently invalidate chats panel for timestamp sync, but avoid full message-re-render
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+    },
     onError: (err, variables, context: any) => {
       queryClient.setQueryData(["messages", selectedChatId], context?.previousMessages);
       queryClient.setQueryData(["chats"], context?.previousChats);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", selectedChatId] });
-      queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
   });
 

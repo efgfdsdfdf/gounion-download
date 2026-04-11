@@ -118,12 +118,32 @@ export const Profile = () => {
   return (
     <div className="max-w-4xl mx-auto w-full pb-24 pt-8">
       {/* Header */}
-      <div className="relative mb-16">
-        <div className="h-64 rounded-3xl overflow-hidden bg-white/5 border border-white/10">
+      <div className="relative mb-16 group">
+        <div className="h-64 rounded-3xl overflow-hidden bg-white/5 border border-white/10 relative">
           {user.coverUrl ? (
             <img src={user.coverUrl} className="w-full h-full object-cover" alt="Cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5" />
+          )}
+          
+          {/* Cover Photo Upload Overlay */}
+          {isOwnProfile && (
+            <label className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity border border-white/10 shadow-xl overflow-hidden group/btn">
+              <span className="relative z-10 flex items-center gap-2">
+                <Edit3 size={14} /> Update Cover
+              </span>
+              <div className="absolute inset-0 bg-white/10 scale-x-0 group-hover/btn:scale-x-100 transform origin-left transition-transform duration-300 pointer-events-none" />
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    updateProfileMutation.mutate({ coverImage: e.target.files[0] });
+                  }
+                }} 
+              />
+            </label>
           )}
         </div>
         

@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
+import { useAuthStore } from '../store';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 
@@ -20,9 +21,12 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 403 && error.response?.data?.detail === "Your account has been suspended.") {
-      sessionStorage.clear();
-      window.location.href = '/#/auth';
+    const isSuspended = error.response?.status === 403 && error.response?.data?.detail === "Your account has been suspended.";
+    const isUnauthorized = error.response?.status === 401;
+
+    if (isSuspended || isUnauthorized) {
+      useAuthStore.getState().logout(); // Aggressively flush Zustand and Session memory
+      window.location.href = '/#/login';
     }
     return Promise.reject(error);
   }
@@ -181,6 +185,7 @@ export const api = {
     },
     update: async (data: any) => {
       let profile_picture = data.profile_picture;
+      let cover_photo = data.cover_photo;
       
       if (data.avatar) {
         const formData = new FormData();
@@ -189,11 +194,19 @@ export const api = {
         profile_picture = uploadRes.data.url;
       }
 
+      if (data.coverImage) {
+        const formData = new FormData();
+        formData.append('file', data.coverImage);
+        const uploadRes = await apiClient.post('/upload/', formData);
+        cover_photo = uploadRes.data.url;
+      }
+
       const res = await apiClient.put('/profiles/me', {
         full_name: data.fullName,
         bio: data.bio,
         university: data.university,
-        profile_picture: profile_picture
+        profile_picture: profile_picture,
+        cover_photo: cover_photo
       });
       
       // Profiles/me returns the profile object, but we need the user object for transformUser
