@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  HashRouter,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -21,6 +21,7 @@ import { Profile } from "./pages/Profile";
 import { Alumni } from "./pages/Alumni";
 import { GroupDetails } from "./pages/GroupDetails";
 import { AdminPanel } from "./pages/AdminPanel";
+import { DownloadPage } from "./pages/DownloadPage";
 import { useAuthStore } from "./store";
 
 const queryClient = new QueryClient({
@@ -58,9 +59,14 @@ const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
-  const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
+  const PUBLIC_ROUTES = [
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/download",
+  ];
   if (!isAuthenticated && !PUBLIC_ROUTES.includes(location.pathname)) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/download" replace />;
   }
 
   return (
@@ -71,6 +77,7 @@ const AppRoutes = () => {
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/download" element={<DownloadPage />} />
       <Route
         path="/"
         element={
@@ -127,7 +134,7 @@ const AppRoutes = () => {
           </PrivateRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/download" />} />
     </Routes>
   );
 };
@@ -135,9 +142,9 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <HashRouter>
+      <BrowserRouter>
         <AppRoutes />
-      </HashRouter>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

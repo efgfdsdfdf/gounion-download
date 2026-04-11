@@ -2,7 +2,10 @@
 import axios from 'axios';
 import { useAuthStore } from '../store';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+const DEFAULT_PROD_API_URL = 'https://gounion-backend.onrender.com';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:8001' : DEFAULT_PROD_API_URL);
 
 // Create axios instance
 const apiClient = axios.create({
@@ -26,7 +29,7 @@ apiClient.interceptors.response.use(
 
     if (isSuspended || isUnauthorized) {
       useAuthStore.getState().logout(); // Aggressively flush Zustand and Session memory
-      window.location.href = '/#/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

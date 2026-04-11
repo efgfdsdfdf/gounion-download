@@ -209,6 +209,14 @@ export const Login = () => {
             <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Encrypted</span>
           </div>
         </div>
+        <div className="mt-6 text-center">
+          <Link
+            to="/download"
+            className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-primary transition-colors"
+          >
+            Download Android APK
+          </Link>
+        </div>
       </motion.div>
     </div>
   );
