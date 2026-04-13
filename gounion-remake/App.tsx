@@ -29,6 +29,7 @@ import { useAuthStore } from "./store";
 import { API_URL, api } from "./services/api";
 import { usePushNotifications } from "./hooks/usePushNotifications";
 import { ToastProvider } from "./components/ui/Toast";
+import { GoUnionLoader } from "./components/ui/GoUnionLoader";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ const AppRoutes = () => {
   const [checkingBackend, setCheckingBackend] = useState(true);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [skipBackendGate, setSkipBackendGate] = useState(false);
+  const [showPageLoader, setShowPageLoader] = useState(true);
 
   const isNativeApp = Capacitor.isNativePlatform();
   const hasDownloadedApk = useMemo(() => {
@@ -185,6 +187,14 @@ const AppRoutes = () => {
     void checkBackendHealth();
   }, []);
 
+  useEffect(() => {
+    setShowPageLoader(true);
+    const timer = window.setTimeout(() => {
+      setShowPageLoader(false);
+    }, 520);
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
+
   useWebSocket();
 
   const PUBLIC_ROUTES = [
@@ -210,99 +220,102 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/" /> : <Login />}
-      />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route
-        path="/download"
-        element={isNativeApp ? <Navigate to="/login" replace /> : <DownloadPage />}
-      />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/groups"
-        element={
-          <PrivateRoute>
-            <Groups />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/groups/:id"
-        element={
-          <PrivateRoute>
-            <GroupDetails />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/messages"
-        element={
-          <PrivateRoute>
-            <Messages />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/alumni"
-        element={
-          <PrivateRoute>
-            <Alumni />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/profile/:username"
-        element={
-          <PrivateRoute>
-            <Profile />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute>
-            <AdminPanel />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/discover"
-        element={
-          <PrivateRoute>
-            <Alumni />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <PrivateRoute>
-            <Settings />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/notifications"
-        element={
-          <PrivateRoute>
-            <Notifications />
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <>
+      {showPageLoader && <GoUnionLoader message="Preparing page..." />}
+      <Routes>
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/" /> : <Login />}
+        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/download"
+          element={isNativeApp ? <Navigate to="/login" replace /> : <DownloadPage />}
+        />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/groups"
+          element={
+            <PrivateRoute>
+              <Groups />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/groups/:id"
+          element={
+            <PrivateRoute>
+              <GroupDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <PrivateRoute>
+              <Messages />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/alumni"
+          element={
+            <PrivateRoute>
+              <Alumni />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile/:username"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <AdminPanel />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/discover"
+          element={
+            <PrivateRoute>
+              <Alumni />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <Settings />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <Notifications />
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </>
   );
 };
 

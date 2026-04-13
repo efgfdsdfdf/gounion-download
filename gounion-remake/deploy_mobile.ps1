@@ -29,6 +29,10 @@ $nodeCapPath = "node_modules/@capacitor/android/capacitor/build.gradle"
 if (Test-Path $nodeCapPath) {
     (Get-Content $nodeCapPath) -replace 'VERSION_21', 'VERSION_17' | Set-Content $nodeCapPath
 }
+$pushPluginPath = "node_modules/@capacitor/push-notifications/android/build.gradle"
+if (Test-Path $pushPluginPath) {
+    (Get-Content $pushPluginPath) -replace 'VERSION_21', 'VERSION_17' | Set-Content $pushPluginPath
+}
 
 # 4. Build Android APK
 Write-Host "🤖 Building Android APK..." -ForegroundColor Yellow
