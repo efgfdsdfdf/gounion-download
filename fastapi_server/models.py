@@ -306,7 +306,9 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"))
     sender_id = Column(String, ForeignKey("users.id"))
-    content = Column(String)
+    content = Column(String, nullable=True)
+    image_url = Column(String, nullable=True)
+    video_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     is_read = Column(Boolean, default=False)
 

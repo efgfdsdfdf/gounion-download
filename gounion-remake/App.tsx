@@ -22,7 +22,10 @@ import { Alumni } from "./pages/Alumni";
 import { GroupDetails } from "./pages/GroupDetails";
 import { AdminPanel } from "./pages/AdminPanel";
 import { Settings } from "./pages/Settings";
+import { Notifications } from "./pages/Notifications";
 import { useAuthStore } from "./store";
+import { useEffect } from "react";
+import { ToastProvider } from "./components/ui/Toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,9 +58,45 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   return <AppLayout>{children}</AppLayout>;
 };
 
+const useWebSocket = () => {
+  const { user, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
+    const wsUrl = API_URL.replace('http', 'ws') + `/ws/${user.id}`;
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_message') {
+          const msg = data.message;
+          // Invalidate affected queries for instant refresh
+          queryClient.invalidateQueries({ queryKey: ["messages", msg.conversation_id.toString()] });
+          queryClient.invalidateQueries({ queryKey: ["chats"] });
+          queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+        }
+      } catch (e) {
+        console.error("WS Message error", e);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("WS Disconnected. Reconnecting in 5s...");
+      // Optional: Auto-reconnect logic
+    };
+
+    return () => socket.close();
+  }, [isAuthenticated, user?.id]);
+};
+
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
+
+  useWebSocket();
 
   const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
   if (!isAuthenticated && !PUBLIC_ROUTES.includes(location.pathname)) {
@@ -144,6 +183,14 @@ const AppRoutes = () => {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <Notifications />
+          </PrivateRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
@@ -152,9 +199,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
+      <ToastProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 };

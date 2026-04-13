@@ -1,14 +1,24 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Home, Users, MessageSquare, User } from "lucide-react";
+import { Home, Users, MessageSquare, User, Bell } from "lucide-react";
 import { useAuthStore } from "../../store";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../services/api";
 import { motion } from "framer-motion";
 
 export const MobileNav = () => {
   const { user } = useAuthStore();
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: api.notifications.getUnreadCount,
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count || 0;
+
   const NAV_ITEMS = [
     { icon: Home, label: "Feed", path: "/" },
     { icon: Users, label: "Groups", path: "/groups" },
+    { icon: Bell, label: "Alerts", path: "/notifications" },
     { icon: MessageSquare, label: "Chat", path: "/messages" },
     { icon: User, label: "Profile", path: `/profile/${user?.username}` },
   ];
@@ -33,10 +43,14 @@ export const MobileNav = () => {
                   transition={{ type: "spring", duration: 0.5 }}
                 />
               )}
-              <item.icon
-                size={20}
-                className={`relative z-10 transition-transform ${isActive ? "scale-110" : ""}`}
-              />
+              <div className="relative z-10 transition-transform">
+                <item.icon size={20} className={isActive ? "scale-110" : ""} />
+                {item.path === '/notifications' && unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </div>
               <span className="relative z-10 text-[9px] mt-1 font-bold tracking-tight uppercase">
                 {item.label}
               </span>

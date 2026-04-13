@@ -294,7 +294,9 @@ class GroupRequest(GroupRequestBase):
 
 
 class MessageBase(BaseModel):
-    content: str
+    content: Optional[str] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
 
 
 class MessageCreate(MessageBase):
