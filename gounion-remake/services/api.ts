@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 import { useAuthStore } from '../store';
+import { authStorage } from '../utils/persistentStorage';
 
 const DEFAULT_PROD_API_URL = 'https://gounion-backend.onrender.com';
 export const API_URL =
@@ -14,7 +15,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('access_token');
+  const token = authStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -64,7 +65,7 @@ export const transformUser = (user: any) => {
 };
 
 const transformPost = (post: any) => {
-  const userStr = sessionStorage.getItem('user_data');
+  const userStr = authStorage.getItem('user_data');
   const user = userStr ? JSON.parse(userStr) : null;
   const currentUserId = user ? user.id : null;
 
@@ -99,12 +100,12 @@ export const api = {
       
       const res = await apiClient.post('/token', formData);
       const accessToken = res.data.access_token;
-      sessionStorage.setItem('access_token', accessToken);
+      authStorage.setItem('access_token', accessToken);
       
       const userRes = await apiClient.get('/users/me/');
       const transformedUser = transformUser(userRes.data);
-      sessionStorage.setItem('user_data', JSON.stringify(transformedUser));
-      sessionStorage.setItem('user_id', transformedUser.id);
+      authStorage.setItem('user_data', JSON.stringify(transformedUser));
+      authStorage.setItem('user_id', transformedUser.id);
       
       return { user: transformedUser, access_token: accessToken };
     },
@@ -243,7 +244,7 @@ export const api = {
     },
     getSuggestions: async () => {
       const res = await apiClient.get('/search/users?q=');
-      return res.data.map(transformUser).filter((u: any) => u.id !== sessionStorage.getItem('user_id'));
+      return res.data.map(transformUser).filter((u: any) => u.id !== authStorage.getItem('user_id'));
     }
   },
   groups: {
@@ -343,7 +344,7 @@ export const api = {
   chats: {
     getAll: async () => {
       const res = await apiClient.get('/conversations/');
-      const currentUserId = sessionStorage.getItem('user_id');
+      const currentUserId = authStorage.getItem('user_id');
       return res.data.map((c: any) => ({
         id: c.id.toString(),
         partner: transformUser(c.participants.find((p: any) => p.id !== currentUserId) || c.participants[0]),
@@ -434,7 +435,7 @@ export const api = {
         timestamp: new Date(s.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         likesCount: s.likes?.length || 0,
         viewsCount: s.views?.length || 0,
-        isLiked: s.likes?.some((l: any) => l.user_id === sessionStorage.getItem('user_id')),
+        isLiked: s.likes?.some((l: any) => l.user_id === authStorage.getItem('user_id')),
       }));
     },
     create: async (data: any) => {

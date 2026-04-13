@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Phone, Video, MoreVertical, Search, ChevronLeft, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../services/api";
+import { authStorage } from "../utils/persistentStorage";
 
 export const Messages = () => {
   const queryClient = useQueryClient();
-  const currentUserId = sessionStorage.getItem("user_id");
+  const currentUserId = authStorage.getItem("user_id");
   
   const { data: chats } = useQuery({
     queryKey: ["chats"],
