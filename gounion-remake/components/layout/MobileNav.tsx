@@ -1,11 +1,25 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
-import { Home, Users, MessageSquare, User } from "lucide-react";
+import React, { useState } from "react";
+import { NavLink, Link } from "react-router-dom";
+import { 
+  Home, 
+  Users, 
+  MessageSquare, 
+  User, 
+  MoreHorizontal, 
+  Compass, 
+  GraduationCap, 
+  ShieldCheck, 
+  Settings, 
+  LogOut,
+  X
+} from "lucide-react";
 import { useAuthStore } from "../../store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const MobileNav = () => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const [isOthersOpen, setIsOthersOpen] = useState(false);
+
   const NAV_ITEMS = [
     { icon: Home, label: "Feed", path: "/" },
     { icon: Users, label: "Groups", path: "/groups" },
@@ -13,37 +27,117 @@ export const MobileNav = () => {
     { icon: User, label: "Profile", path: `/profile/${user?.username}` },
   ];
 
+  const OTHER_ITEMS = [
+    { icon: Compass, label: "Discover", path: "/discover" },
+    { icon: GraduationCap, label: "Alumni", path: "/alumni" },
+    ...(user?.role === "admin" || user?.role === "moderator" 
+      ? [{ icon: ShieldCheck, label: "Admin Panel", path: "/admin" }] 
+      : []),
+    { icon: Settings, label: "Settings", path: "/settings" },
+  ];
+
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm h-16 bg-[#09090b]/60 backdrop-blur-2xl border border-white/10 z-50 flex items-center justify-around px-2 rounded-2xl shadow-2xl">
-      {NAV_ITEMS.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          className={({ isActive }) => `
-            relative flex flex-col items-center justify-center h-full flex-1 transition-all duration-300
-            ${isActive ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"}
-          `}
-        >
-          {({ isActive }) => (
-            <>
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-violet-600/10 rounded-xl"
-                  transition={{ type: "spring", duration: 0.5 }}
+    <>
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md h-16 bg-black/60 backdrop-blur-2xl border border-white/10 z-50 flex items-center justify-around px-2 rounded-2xl shadow-2xl">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => `
+              relative flex flex-col items-center justify-center h-full flex-1 transition-all duration-300
+              ${isActive ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"}
+            `}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-violet-600/10 rounded-xl"
+                    transition={{ type: "spring", duration: 0.5 }}
+                  />
+                )}
+                <item.icon
+                  size={20}
+                  className={`relative z-10 transition-transform ${isActive ? "scale-110" : ""}`}
                 />
-              )}
-              <item.icon
-                size={20}
-                className={`relative z-10 transition-transform ${isActive ? "scale-110" : ""}`}
-              />
-              <span className="relative z-10 text-[9px] mt-1 font-bold tracking-tight uppercase">
-                {item.label}
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </div>
+                <span className="relative z-10 text-[9px] mt-1 font-bold tracking-tight uppercase">
+                  {item.label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        <button
+          onClick={() => setIsOthersOpen(true)}
+          className={`relative flex flex-col items-center justify-center h-full flex-1 transition-all duration-300 ${isOthersOpen ? "text-violet-400" : "text-zinc-500"}`}
+        >
+          <MoreHorizontal size={20} />
+          <span className="text-[9px] mt-1 font-bold tracking-tight uppercase">Others</span>
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isOthersOpen && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-24 md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOthersOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-zinc-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="font-serif text-2xl text-white">More Pages</h2>
+                <button 
+                  onClick={() => setIsOthersOpen(false)}
+                  className="p-2 bg-white/5 rounded-full text-zinc-400 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {OTHER_ITEMS.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsOthersOpen(false)}
+                    className="flex flex-col items-center justify-center p-6 bg-white/5 border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-violet-600/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <item.icon className="w-6 h-6 text-violet-400" />
+                    </div>
+                    <span className="text-sm font-medium text-white">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-white/5">
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsOthersOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 font-bold text-xs uppercase tracking-widest hover:bg-red-500/20 transition-all"
+                >
+                  <LogOut size={18} />
+                  Logout Session
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };

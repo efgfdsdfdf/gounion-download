@@ -175,9 +175,12 @@ export const Profile = () => {
             </button>
           ) : (
             <>
-              <button className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 text-white rounded-xl hover:bg-black/70 transition-colors">
+              <Link 
+                to={`/messages?userId=${user.id}`}
+                className="p-2.5 bg-black/50 backdrop-blur-md border border-white/10 text-white rounded-xl hover:bg-black/70 transition-colors"
+              >
                 <MessageSquare size={20} />
-              </button>
+              </Link>
               <button
                 onClick={() => followMutation.mutate()}
                 className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${

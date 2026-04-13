@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send, Phone, Video, MoreVertical, Search, ChevronLeft, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +9,9 @@ import { authStorage } from "../utils/persistentStorage";
 export const Messages = () => {
   const queryClient = useQueryClient();
   const currentUserId = authStorage.getItem("user_id");
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const userIdFromQuery = searchParams.get("userId");
+
   const { data: chats } = useQuery({
     queryKey: ["chats"],
     queryFn: api.chats.getAll,
@@ -16,6 +19,27 @@ export const Messages = () => {
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
+
+  const createChatMutation = useMutation({
+    mutationFn: (participantId: string) => api.chats.createConversation([participantId]),
+    onSuccess: (newChat) => {
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      setSelectedChatId(newChat.id.toString());
+      setSearchParams({}, { replace: true });
+    },
+  });
+
+  useEffect(() => {
+    if (userIdFromQuery && chats) {
+      const existingChat = chats.find(c => c.partner.id === userIdFromQuery);
+      if (existingChat) {
+        setSelectedChatId(existingChat.id);
+        setSearchParams({}, { replace: true });
+      } else if (!createChatMutation.isPending && !createChatMutation.isSuccess) {
+        createChatMutation.mutate(userIdFromQuery);
+      }
+    }
+  }, [userIdFromQuery, chats, createChatMutation.isPending, createChatMutation.isSuccess]);
 
   const { data: messages } = useQuery({
     queryKey: ["messages", selectedChatId],
@@ -66,13 +90,10 @@ export const Messages = () => {
       return { previousMessages, previousChats };
     },
     onSuccess: (newServerMsg) => {
-      // Upon successful network commit, replace the temporary tracking message with 
-      // the permanent authoritative message from the backend.
       queryClient.setQueryData(["messages", selectedChatId], (old: any) => {
         const sansTemp = old?.filter((m: any) => !m.id.toString().startsWith('temp-')) || [];
         return [...sansTemp, newServerMsg];
       });
-      // Gently invalidate chats panel for timestamp sync, but avoid full message-re-render
       queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
     onError: (err, variables, context: any) => {
