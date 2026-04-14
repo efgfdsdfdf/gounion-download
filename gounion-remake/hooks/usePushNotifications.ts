@@ -1,47 +1,78 @@
-import { useEffect } from 'react';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { Capacitor } from '@capacitor/core';
+import { useEffect } from "react";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { Capacitor } from "@capacitor/core";
+import { useAuthStore } from "../store";
 
 export const usePushNotifications = () => {
+  const { isAuthenticated } = useAuthStore();
+  const pushEnabled = import.meta.env.VITE_ENABLE_PUSH_NOTIFICATIONS === "true";
+
   useEffect(() => {
-    if (Capacitor.getPlatform() !== 'web') {
-      registerPush();
-    }
-  }, []);
-
-  const registerPush = async () => {
-    let permStatus = await PushNotifications.checkPermissions();
-
-    if (permStatus.receive === 'prompt') {
-      permStatus = await PushNotifications.requestPermissions();
-    }
-
-    if (permStatus.receive !== 'granted') {
-      console.warn('User denied push notification permissions');
+    if (!pushEnabled || !isAuthenticated || !Capacitor.isNativePlatform()) {
       return;
     }
 
-    await PushNotifications.register();
+    let isCancelled = false;
+    const listenerHandles: Array<{ remove: () => Promise<void> }> = [];
 
-    // Listeners
-    PushNotifications.addListener('registration', (token) => {
-      console.log('Push registration success, token: ' + token.value);
-      // TODO: Send this token to your backend API to save it
-      // Example: api.notifications.saveToken(token.value);
-    });
+    const registerPush = async () => {
+      try {
+        let permStatus = await PushNotifications.checkPermissions();
 
-    PushNotifications.addListener('registrationError', (error) => {
-      console.error('Error on registration: ' + JSON.stringify(error));
-    });
+        if (permStatus.receive !== "granted") {
+          // Do not auto-prompt at startup; request from an explicit settings action.
+          console.warn("Push permission not granted yet; skipping registration.");
+          return;
+        }
 
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Push received: ' + JSON.stringify(notification));
-      // You can trigger a UI alert or update local state here if the app is foregrounded
-    });
+        if (isCancelled) return;
 
-    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-      console.log('Push action performed: ' + JSON.stringify(notification));
-      // Handle navigation if needed when user taps the notification
-    });
-  };
+        listenerHandles.push(
+          await PushNotifications.addListener("registration", (token) => {
+            console.log("Push registration success, token:", token.value);
+            // TODO: Send this token to your backend API to save it
+            // Example: api.notifications.saveToken(token.value);
+          }),
+        );
+
+        listenerHandles.push(
+          await PushNotifications.addListener("registrationError", (error) => {
+            console.error("Push registration error:", error);
+          }),
+        );
+
+        listenerHandles.push(
+          await PushNotifications.addListener(
+            "pushNotificationReceived",
+            (notification) => {
+              console.log("Push received:", notification);
+            },
+          ),
+        );
+
+        listenerHandles.push(
+          await PushNotifications.addListener(
+            "pushNotificationActionPerformed",
+            (notification) => {
+              console.log("Push action performed:", notification);
+            },
+          ),
+        );
+
+        await PushNotifications.register();
+      } catch (error) {
+        // Prevent fatal startup crashes on devices with partial push setup.
+        console.error("Push initialization failed:", error);
+      }
+    };
+
+    void registerPush();
+
+    return () => {
+      isCancelled = true;
+      listenerHandles.forEach((handle) => {
+        void handle.remove();
+      });
+    };
+  }, [isAuthenticated, pushEnabled]);
 };
