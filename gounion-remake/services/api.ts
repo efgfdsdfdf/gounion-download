@@ -151,7 +151,11 @@ export const api = {
   },
   posts: {
     getFeed: async ({ pageParam = 0 }: { pageParam?: number } = {}) => {
-      const res = await apiClient.get(`/posts/?skip=${pageParam * 10}&limit=10`);
+      const res = await apiClient.get(`/feed/?skip=${pageParam * 10}&limit=10`);
+      return res.data.map(transformPost);
+    },
+    getReels: async ({ pageParam = 0 }: { pageParam?: number } = {}) => {
+      const res = await apiClient.get(`/feed/?skip=${pageParam * 10}&limit=10&reels=true`);
       return res.data.map(transformPost);
     },
     create: async (data: any) => {

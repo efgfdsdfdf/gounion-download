@@ -536,10 +536,17 @@ def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 def read_feed(
     skip: int = 0,
     limit: int = 100,
+    reels: bool = False,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    return crud.get_feed_posts(db, user_id=current_user.id, skip=skip, limit=limit)
+    return crud.get_feed_posts(
+        db,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        reels=reels,
+    )
 
 
 @app.post("/posts/", response_model=schemas.Post)
@@ -1285,7 +1292,7 @@ async def mobile_version(current_version: Optional[str] = None):
     - min_supported_version: minimum app version allowed to continue
     - force_update: true when current version is below minimum supported
     """
-    latest_version = os.getenv("MOBILE_LATEST_VERSION", "2026.04.13.1")
+    latest_version = os.getenv("MOBILE_LATEST_VERSION", "2026.04.14.1")
     min_supported_version = os.getenv("MOBILE_MIN_SUPPORTED_VERSION", latest_version)
     apk_url = os.getenv(
         "MOBILE_APK_URL",

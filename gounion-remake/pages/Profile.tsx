@@ -15,6 +15,7 @@ import { useAuthStore } from "../store";
 import { motion, AnimatePresence } from "framer-motion";
 import { EditProfileModal } from "../components/profile/EditProfileModal";
 import { PostCard } from "../components/feed/PostCard";
+import { CreatePost } from "../components/feed/CreatePost";
 import { api } from "../services/api";
 
 export const Profile = () => {
@@ -265,6 +266,9 @@ export const Profile = () => {
                 <Skeleton className="h-64 rounded-3xl w-full" />
               ) : (
                 <div className="space-y-6 text-white">
+                  {activeTab === "posts" && isOwnProfile && (
+                    <CreatePost profileUsername={username} />
+                  )}
                   {(activeTab === "media" ? posts?.filter((p: any) => p.imageUrl) : posts)?.map((post: any) => (
                     <PostCard key={post.id} post={post} />
                   ))}

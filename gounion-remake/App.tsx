@@ -13,6 +13,7 @@ import { RightSidebar } from "./components/layout/RightSidebar";
 import { TopNav } from "./components/layout/TopNav";
 import { MobileNav } from "./components/layout/MobileNav";
 import { Dashboard } from "./pages/Dashboard";
+import { Discover } from "./pages/Discover";
 import { Login } from "./pages/Login";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
@@ -341,7 +342,7 @@ const AppRoutes = () => {
           path="/discover"
           element={
             <PrivateRoute>
-              <Alumni />
+              <Discover />
             </PrivateRoute>
           }
         />
